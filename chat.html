@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ComercIA Chat - Ícaro</title>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    
+    <style>
+        /* Reset e Base */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        /* Variáveis CSS */
+        :root {
+            --primary: #3b82f6;
+            --primary-dark: #1d4ed8;
+            --accent-purple: #8b5cf6;
+            --background: #ffffff;
+            --foreground: #1f2937;
+            --muted: #f3f4f6;
+            --muted-foreground: #6b7280;
+            --border: #e5e7eb;
+            --gradient-primary: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+            --shadow-sm: 0 2px 8px rgba(0,0,0,0.06);
+            --shadow-md: 0 8px 32px rgba(0,0,0,0.1);
+            --shadow-lg: 0 16px 64px rgba(0,0,0,0.15);
+            --shadow-xl: 0 24px 96px rgba(0,0,0,0.2);
+            --shadow-blue: 0 8px 32px rgba(59, 130, 246, 0.3);
+            --shadow-hover: 0 20px 64px rgba(59, 130, 246, 0.4);
+        }
+
+        /* Chat Bubble Toggle */
+        .chat-bubble {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: var(--gradient-primary);
+            border: none;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: var(--shadow-blue);
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .chat-bubble:hover {
+            box-shadow: var(--shadow-hover);
+            transform: scale(1.1);
+        }
+
+        .chat-bubble i {
+            width: 24px;
+            height: 24px;
+        }
+
+        /* Animação de pulso para chamar atenção */
+        .chat-bubble::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            border-radius: 50%;
+            background: var(--gradient-primary);
+            opacity: 0.3;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+                opacity: 0.3;
+            }
+            50% {
+                transform: scale(1.1);
+                opacity: 0.1;
+            }
+            100% {
+                transform: scale(1);
+                opacity: 0.3;
+            }
+        }
+
+        /* Container Principal */
+        .chat-container {
+            position: fixed;
+            bottom: 90px;
+            right: 20px;
+            width: 350px;
+            height: 500px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: var(--shadow-xl);
+            overflow: hidden;
+            display: none;
+            flex-direction: column;
+            z-index: 1000;
+        }
+
+        .chat-container.open {
+            display: flex;
+        }
+
+        /* Header do Chat */
+        .chat-header {
+            background: var(--gradient-primary);
+            color: white;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .chat-avatar {
+            position: relative;
+        }
+
+        .avatar-img {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .status-indicator {
+            position: absolute;
+            bottom: 2px;
+            right: 2px;
+            width: 12px;
+            height: 12px;
+            background: #10b981;
+            border: 2px solid white;
+            border-radius: 50%;
+        }
+
+        .chat-info h3 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .chat-info p {
+            margin: 0;
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .chat-close {
+            margin-left: auto;
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 50%;
+            transition: background 0.3s ease;
+        }
+
+        .chat-close:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .chat-close i {
+            width: 20px;
+            height: 20px;
+        }
+
+        /* Área de Mensagens */
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            background: #f8fafc;
+        }
+
+        .message {
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+        }
+
+        .bot-message {
+            justify-content: flex-start;
+        }
+
+        .user-message {
+            justify-content: flex-end;
+        }
+
+        .message-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .message-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .message-content {
+            background: var(--muted);
+            padding: 12px 16px;
+            border-radius: 18px;
+            position: relative;
+            max-width: 80%;
+        }
+
+        .user-message .message-content {
+            background: var(--gradient-primary);
+            color: white;
+        }
+
+        .message-content p {
+            margin: 0;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        /* Indicador de Digitação */
+        .typing-indicator .message-content {
+            background: var(--muted);
+            padding: 16px;
+        }
+
+        .typing-dots {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+        }
+
+        .typing-dots span {
+            width: 8px;
+            height: 8px;
+            background: var(--muted-foreground);
+            border-radius: 50%;
+            animation: typing 1.4s infinite ease-in-out;
+        }
+
+        .typing-dots span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dots span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        /* Input do Chat */
+        .chat-input-container {
+            padding: 20px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            background: white;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid var(--border);
+            border-radius: 25px;
+            font-size: 14px;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .chat-input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .chat-send {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: var(--gradient-primary);
+            border: none;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .chat-send:hover {
+            box-shadow: var(--shadow-blue);
+            transform: scale(1.05);
+        }
+
+        .chat-send:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .chat-send i {
+            width: 18px;
+            height: 18px;
+        }
+
+        /* Animações */
+        @keyframes typing {
+            0%, 60%, 100% {
+                transform: translateY(0);
+                opacity: 0.5;
+            }
+            30% {
+                transform: translateY(-10px);
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message {
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        /* Scrollbar personalizada */
+        .chat-messages::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .chat-messages::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 3px;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
+
+        /* Responsividade */
+        @media (max-width: 480px) {
+            .chat-container {
+                height: 100vh;
+                border-radius: 0;
+                max-width: none;
+            }
+            
+            .chat-header {
+                padding: 16px;
+            }
+            
+            .chat-messages {
+                padding: 16px;
+            }
+            
+            .chat-input-container {
+                padding: 16px;
+            }
+        }
+
+        /* Responsividade para mobile */
+        @media (max-width: 480px) {
+            .chat-container {
+                width: calc(100vw - 20px);
+                height: calc(100vh - 100px);
+                right: 10px;
+                bottom: 80px;
+            }
+            
+            .chat-bubble {
+                bottom: 10px;
+                right: 10px;
+                width: 50px;
+                height: 50px;
+            }
+            
+            .chat-bubble i {
+                width: 20px;
+                height: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Chat Bubble Toggle -->
+    <button id="chat-bubble" class="chat-bubble">
+        <i data-lucide="message-circle"></i>
+    </button>
+    
+    <!-- Chat Container -->
+    <div id="chat-container" class="chat-container">
+            <!-- Header do chat -->
+            <div class="chat-header">
+                <div class="chat-avatar">
+                    <img src="assets/images/comercia-logo.jpg" alt="Ícaro" class="avatar-img">
+                    <div class="status-indicator"></div>
+                </div>
+                <div class="chat-info">
+                    <h3>Ícaro</h3>
+                    <p>Consultor ComercIA</p>
+                </div>
+                <button id="chat-close" class="chat-close">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            
+            <!-- Mensagens -->
+            <div id="chat-messages" class="chat-messages">
+                <!-- Mensagens serão carregadas dinamicamente -->
+            </div>
+            
+            <!-- Input do chat -->
+            <div class="chat-input-container">
+                <input type="text" id="chat-input" class="chat-input" placeholder="Digite sua mensagem...">
+                <button id="chat-send" class="chat-send">
+                    <i data-lucide="send"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script do Chat -->
+    <script>
+        // Configuração da API do Gemini
+        const GEMINI_API_KEY = 'AIzaSyC-cFaR2Pwpn4o3MFuszpdbCTynxuFH3c0';
+        const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
+
+        // Elementos do chat
+        const chatBubble = document.getElementById('chat-bubble');
+        const chatContainer = document.getElementById('chat-container');
+        const chatClose = document.getElementById('chat-close');
+        const chatInput = document.getElementById('chat-input');
+        const chatSend = document.getElementById('chat-send');
+        const chatMessages = document.getElementById('chat-messages');
+
+        // Estado do chat
+        let isOpen = false;
+        let isLoading = false;
+        let conversationHistory = [];
+
+        // Funções para gerenciar histórico
+        function saveConversation() {
+            localStorage.setItem('comercia-chat-history', JSON.stringify(conversationHistory));
+        }
+
+        function loadConversation() {
+            const saved = localStorage.getItem('comercia-chat-history');
+            if (saved) {
+                conversationHistory = JSON.parse(saved);
+                // Limitar histórico a 20 mensagens para não sobrecarregar
+                if (conversationHistory.length > 20) {
+                    conversationHistory = conversationHistory.slice(-20);
+                }
+            }
+        }
+
+        function addToHistory(role, content) {
+            conversationHistory.push({ role, content, timestamp: Date.now() });
+            saveConversation();
+        }
+
+        function buildContextPrompt() {
+            let context = `Você é o Ícaro, consultor da ComercIA. Seja conversacional, direto e natural.
+
+SOBRE A COmercIA:
+- SaaS que conecta WhatsApp + ERP via IA
+- Módulos: Agendamentos, Controle de Pedidos, Notificadores, Integrações ERPs
+- Implementação em 1 hora, 100% automatizado
+- Focamos em pequenos negócios brasileiros
+
+SEU ESTILO:
+- Respostas curtas e diretas (máximo 3-4 frases)
+- Tom amigável e técnico, mas sem ser forçado
+- Responda apenas o que foi perguntado
+- Seja persuasivo de forma natural, não insistente
+- Use exemplos práticos quando relevante
+- Ofereça demonstração apenas quando apropriado
+
+CONTEXTO DA CONVERSA:`;
+
+            // Adicionar histórico da conversa
+            if (conversationHistory.length > 0) {
+                context += "\n\nConversa anterior:";
+                conversationHistory.forEach(msg => {
+                    const role = msg.role === 'user' ? 'Cliente' : 'Ícaro';
+                    context += `\n${role}: ${msg.content}`;
+                });
+            }
+
+            return context;
+        }
+
+        // Toggle do chat bubble
+        chatBubble.addEventListener('click', () => {
+            isOpen = !isOpen;
+            if (isOpen) {
+                chatContainer.classList.add('open');
+                chatInput.focus();
+            } else {
+                chatContainer.classList.remove('open');
+            }
+        });
+
+        // Fechar chat
+        chatClose.addEventListener('click', () => {
+            isOpen = false;
+            chatContainer.classList.remove('open');
+        });
+
+        // Enviar mensagem
+        function sendMessage() {
+            const message = chatInput.value.trim();
+            if (!message || isLoading) return;
+
+            // Adicionar mensagem do usuário
+            addMessage(message, 'user');
+            chatInput.value = '';
+
+            // Enviar para IA
+            sendToAI(message);
+        }
+
+        // Event listeners
+        chatSend.addEventListener('click', sendMessage);
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        // Adicionar mensagem ao chat
+        function addMessage(text, sender) {
+            // Salvar no histórico
+            addToHistory(sender, text);
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}-message`;
+            
+            if (sender === 'bot') {
+                messageDiv.innerHTML = `
+                    <div class="message-avatar">
+                        <img src="assets/images/comercia-logo.jpg" alt="Ícaro">
+                    </div>
+                    <div class="message-content">
+                        <p>${text}</p>
+                    </div>
+                `;
+            } else {
+                messageDiv.innerHTML = `
+                    <div class="message-content">
+                        <p>${text}</p>
+                    </div>
+                `;
+            }
+
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        // Adicionar indicador de digitação
+        function addTypingIndicator() {
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'message bot-message typing-indicator';
+            typingDiv.id = 'typing-indicator';
+            typingDiv.innerHTML = `
+                <div class="message-avatar">
+                    <img src="assets/images/comercia-logo.jpg" alt="Ícaro">
+                </div>
+                <div class="message-content">
+                    <div class="typing-dots">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                </div>
+            `;
+            chatMessages.appendChild(typingDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        // Remover indicador de digitação
+        function removeTypingIndicator() {
+            const typing = document.getElementById('typing-indicator');
+            if (typing) {
+                typing.remove();
+            }
+        }
+
+        // Enviar mensagem para IA
+        async function sendToAI(message) {
+            isLoading = true;
+            addTypingIndicator();
+
+            try {
+                const contextPrompt = buildContextPrompt();
+                
+                const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        contents: [{
+                            parts: [{
+                                text: `${contextPrompt}\n\nCliente: ${message}\n\nÍcaro:`
+                            }]
+                        }]
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                
+                if (data.candidates && data.candidates[0] && data.candidates[0].content) {
+                    const aiResponse = data.candidates[0].content.parts[0].text;
+                    removeTypingIndicator();
+                    addMessage(aiResponse, 'bot');
+                } else {
+                    throw new Error('Resposta inválida da API');
+                }
+            } catch (error) {
+                removeTypingIndicator();
+                addMessage('Desculpe, ocorreu um erro. Tente novamente em alguns instantes.', 'bot');
+            }
+
+            isLoading = false;
+        }
+
+        // Inicializar chat
+        function initializeChat() {
+            // Carregar histórico salvo
+            loadConversation();
+            
+            // Se não há histórico, adicionar mensagem inicial
+            if (conversationHistory.length === 0) {
+                addMessage('Oi! Tudo bem? Sou o Ícaro da ComercIA. Como posso te ajudar hoje?', 'bot');
+            } else {
+                // Recarregar mensagens do histórico
+                chatMessages.innerHTML = '';
+                conversationHistory.forEach(msg => {
+                    const messageDiv = document.createElement('div');
+                    messageDiv.className = `message ${msg.role}-message`;
+                    
+                    if (msg.role === 'bot') {
+                        messageDiv.innerHTML = `
+                            <div class="message-avatar">
+                                <img src="assets/images/comercia-logo.jpg" alt="Ícaro">
+                            </div>
+                            <div class="message-content">
+                                <p>${msg.content}</p>
+                            </div>
+                        `;
+                    } else {
+                        messageDiv.innerHTML = `
+                            <div class="message-content">
+                                <p>${msg.content}</p>
+                            </div>
+                        `;
+                    }
+                    
+                    chatMessages.appendChild(messageDiv);
+                });
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+        }
+
+        // Inicializar quando a página carregar
+        document.addEventListener('DOMContentLoaded', function() {
+            // Inicializar Lucide icons
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+            
+            // Inicializar chat
+            initializeChat();
+        });
+    </script>
+</body>
+</html>
